@@ -41,7 +41,7 @@ class FacesWith3DCoords(Dataset):
 
         mat = np.zeros((size, size, 200), dtype=np.uint8)
         for i in range(len(x)):
-            mat[size - x[i], size - y[i], :z[i]] = 1
+            mat[x[i], y[i], :z[i]] = 1
 
 
         if self.transform:
@@ -54,7 +54,7 @@ class FacesWith3DCoords(Dataset):
             scale = datatransform.Scale()
 
             alpha = 40
-            img, mat = rot(img, alpha), rot(mat, alpha)
+            #img, mat = rot(img, alpha), rot(mat, alpha)
             #img, mat = trans(img, tx, ty), trans(mat, ty, -tx)
             #img, mat = scale(img, factor), scale(mat, factor)
 

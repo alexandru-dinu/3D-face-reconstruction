@@ -30,7 +30,8 @@ def num_flat_features(x):
 
 
 def train():
-    for epoch in range(40):  # loop over the dataset multiple times
+    for epoch in range(10):  # loop over the dataset multiple times
+        print("=== Epoch", epoch, "===")
         running_loss = 0.0
 
         for i, data in enumerate(trainloader, 0):
