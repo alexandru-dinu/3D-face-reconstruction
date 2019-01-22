@@ -37,7 +37,6 @@ class UNet(nn.Module):
         x = self.up2(x, x3)
         x = self.up3(x, x2)
         x = self.up4(x, x1)
-        import pdb;pdb.set_trace()
         x = self.outc(x)
 
         return x
@@ -49,10 +48,3 @@ def to_cuda(data, use_cuda):
         input_ = input_.cuda()
     return input_
 
-
-
-tensor = to_cuda(torch.ones(1, 1, 200, 200), True)
-nn = UNet(1, 10)
-nn.cuda()
-nn(tensor)
-n

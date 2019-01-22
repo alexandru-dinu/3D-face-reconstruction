@@ -8,7 +8,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, utils
 import numpy as np
-import dataloader
+import dataloaders
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -32,7 +32,7 @@ class Resize(object):
 
         # resize images
         img2D = cv2.resize(image2D, (self.output_size, self.output_size))
-        img3D = cv2.resize(image3D, (self.output_size, self.output_size))
+        img3D = cv2.resize(image3D, (self.output_size - 8, self.output_size - 8))
 
         # scale z component
         #img3D[-1] *= self.output_size / size

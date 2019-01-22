@@ -6,6 +6,7 @@ import scipy.io
 import cv2
 from torch.utils.data import Dataset
 import datatransform
+import torch
 
 
 class FacesWith3DCoords(Dataset):
@@ -38,15 +39,16 @@ class FacesWith3DCoords(Dataset):
         y = y.astype(np.int32)
         z = z.astype(np.int32)
 
-        mat = np.zeros((size, size, 200))
+        mat = np.zeros((size, size, 200), dtype=np.uint8)
         for i in range(len(x)):
             mat[x[i], y[i], :z[i]] = 1
 
         # resize to 200 x 200
         R = datatransform.Resize(200)
         img, mat = R((img, mat))
+        img = img.astype(np.float32)
 
-        return self.transform(img), mat
+        return torch.from_numpy(img.transpose(2, 0, 1)), torch.from_numpy(mat.transpose(2, 0, 1))
 
     def __len__(self):
         return len(self.images)
