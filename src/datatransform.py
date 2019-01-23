@@ -1,17 +1,24 @@
 from __future__ import division
-import sys
-import os
-from scipy.io import loadmat
-import cv2
-import matplotlib.pyplot as plt
-import torch
-from torch.utils.data import Dataset, DataLoader
-from torchvision import transforms, utils
-import numpy as np
-import dataloaders
 
 import warnings
+
+import cv2
+import numpy as np
+
+import dataloaders
+from utils import get_args
+
 warnings.filterwarnings("ignore")
+
+
+def rotate(img, alpha):
+    """
+    img.shape must be H,W,C
+    alpha is in degrees
+    """
+    h, w = img.shape[:-1]
+    M = cv2.getRotationMatrix2D((h / 2, w / 2), alpha, 1)
+    return cv2.warpAffine(img, M, (h, w))
 
 
 class Resize(object):
@@ -31,8 +38,7 @@ class Rotation(object):
         # get rotation matrix
         size, _, _ = image.shape
         alpha = np.random.randint(-45, 45)
-        M = cv2.getRotationMatrix2D((size / 2, size / 2), alpha, 1)
-        return cv2.warpAffine(image, M, image.shape[:-1])
+        return rotate(image, alpha)
 
 
 class FlipHorizontal(object):
@@ -58,9 +64,12 @@ class Scale(object):
         return final_img
 
 
-
 if __name__ == "__main__":
-    d = dataloaders.FacesWith3DCoords(images_dir=sys.argv[1], mats_dir=sys.argv[2])
+    args = get_args()
+
+    d = dataloaders.FacesWith3DCoords(
+        images_dir=args.images_dir, mats_dir=args.mats_dir
+    )
     img2D, img3D = d[np.random.randint(len(d))]
 
     # Transf = Translation()

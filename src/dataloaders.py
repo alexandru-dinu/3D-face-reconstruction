@@ -1,12 +1,13 @@
 import os
 
-import matplotlib.pyplot as plt
+import cv2
 import numpy as np
 import scipy.io
-import cv2
-from torch.utils.data import Dataset
-import datatransform
 import torch
+from torch.utils.data import Dataset
+
+import datatransform
+from utils import get_args
 
 
 class FacesWith3DCoords(Dataset):
@@ -29,20 +30,16 @@ class FacesWith3DCoords(Dataset):
     def __getitem__(self, index):
         assert 0 <= index < len(self.images)
 
+        # img is H,W,C
         img = cv2.imread(self.images[index], cv2.IMREAD_COLOR)
         size, _, _ = img.shape
 
-        x, y, z = scipy.io.loadmat(self.mats[index])['Fitted_Face']
+        x, y, z = scipy.io.loadmat(self.mats[index])['Fitted_Face'].astype(np.int32)
         z = z - z.min()
-
-        x = x.astype(np.int32)
-        y = y.astype(np.int32)
-        z = z.astype(np.int32)
 
         mat = np.zeros((size, size, 200), dtype=np.uint8)
         for i in range(len(x)):
             mat[x[i], y[i], :z[i]] = 1
-
 
         if self.transform:
             alpha = np.random.randint(-45, 45)
@@ -54,16 +51,15 @@ class FacesWith3DCoords(Dataset):
             scale = datatransform.Scale()
 
             alpha = 40
-            #img, mat = rot(img, alpha), rot(mat, alpha)
-            #img, mat = trans(img, tx, ty), trans(mat, ty, -tx)
-            #img, mat = scale(img, factor), scale(mat, factor)
-
-
+            # img, mat = rot(img, alpha), rot(mat, alpha)
+            # img, mat = trans(img, tx, ty), trans(mat, ty, -tx)
+            # img, mat = scale(img, factor), scale(mat, factor)
 
         # resize image to 200 x 200 and mat to 192x192
         R = datatransform.Resize()
         img, mat = R(img, 200), R(mat, 192)
 
+        # C, H, W
         return torch.from_numpy(img.transpose(2, 0, 1)), torch.from_numpy(mat.transpose(2, 0, 1))
 
     def __len__(self):
@@ -71,12 +67,14 @@ class FacesWith3DCoords(Dataset):
 
 
 if __name__ == '__main__':
-    import sys
+    args = get_args()
 
-    d = FacesWith3DCoords(images_dir=sys.argv[1], mats_dir=sys.argv[2], transform=True)
+    d = FacesWith3DCoords(
+        images_dir=args.images_dir, mats_dir=args.mats_dir, transform=args.transform
+    )
 
     i, m = d[np.random.randint(len(d))]
-    #print(m)
+    # print(m)
 
     cv2.imshow("Image", i.numpy().transpose(1, 2, 0))
     cv2.waitKey(0)

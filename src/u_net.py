@@ -5,6 +5,7 @@ import torch
 
 from u_net_parts import *
 
+
 class UNet(nn.Module):
     def __init__(self, n_channels, n_classes):
         super(UNet, self).__init__()
@@ -27,7 +28,6 @@ class UNet(nn.Module):
         )
 
     def forward(self, x):
-
         x1 = self.inc(x)
         x2 = self.down1(x1)
         x3 = self.down2(x2)
@@ -47,4 +47,3 @@ def to_cuda(data, use_cuda):
     if use_cuda:
         input_ = input_.cuda()
     return input_
-

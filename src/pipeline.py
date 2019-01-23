@@ -1,14 +1,20 @@
 import torch
 import torch.nn.functional as F
-import dataloaders
-import datatransform
 import torch.optim as optim
-import torchvision.transforms as transforms
-from u_net import UNet, to_cuda
 
-trainset = dataloaders.FacesWith3DCoords(images_dir="300W-3D/ALL_DATA", mats_dir="300W-3D/ALL_DATA", transform=False)
-trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
-                                          shuffle=True, num_workers=2)
+import dataloaders
+from u_net import UNet, to_cuda
+from utils import get_args
+
+args = get_args()
+
+trainset = dataloaders.FacesWith3DCoords(
+    images_dir=args.images_dir, mats_dir=args.mats_dir, transform=args.transform
+)
+
+trainloader = torch.utils.data.DataLoader(
+    trainset, batch_size=4, shuffle=True, num_workers=2
+)
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -30,11 +36,11 @@ def num_flat_features(x):
 
 
 def train():
-    for epoch in range(10):  # loop over the dataset multiple times
+    for epoch in range(1, 11):  # loop over the dataset multiple times
         print("=== Epoch", epoch, "===")
         running_loss = 0.0
 
-        for i, data in enumerate(trainloader, 0):
+        for i, data in enumerate(trainloader, start=1):
             # get the inputs
             imgs2D, imgs3D = data
             imgs3D = imgs3D.reshape(-1, num_flat_features(imgs3D))
@@ -56,13 +62,13 @@ def train():
 
             # print statistics
             running_loss += loss.item()
-            if i % 5 == 4:
+            if i % 5 == 0:
                 print('[%d, %5d] loss: %.3f' %
-                      (epoch + 1, i + 1, running_loss / 5))
+                      (epoch, i, running_loss / 5))
                 running_loss = 0.0
 
-
         torch.save(net, "simple_model")
+
 
 if __name__ == "__main__":
     train()

@@ -81,5 +81,3 @@ class Up(nn.Module):
         x = torch.cat([x2, x1], dim=1)
         x = self.conv(x)
         return x
-
-

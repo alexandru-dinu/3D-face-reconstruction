@@ -1,20 +1,23 @@
 import cv2
 import numpy as np
 import visvis as vv
+
 import dataloaders
+from datatransform import rotate
+from utils import get_args
 
 
 def visualize(im, vol):
     # convert im and vol to numpy
     im, vol = im.numpy(), vol.numpy()
-    print(im.shape)
-    print(vol.shape)
+    print("Image shape:", im.shape)
+    print("Volume shape:", vol.shape)
 
     # some inversion for overlap with 3d representation
-    im = im.transpose(1, 2, 0)
+    im = im.transpose(1, 2, 0)  # H,W,C
 
     # BGR to RGB and rotate (axis inversion)
-    im = im[:, :, ::-1]
+    im = rotate(im[:, :, ::-1], -90)
 
     # resize image to 192 x 192
     im = cv2.resize(im, (192, 192))
@@ -22,12 +25,11 @@ def visualize(im, vol):
     t = vv.imshow(im)
     t.interpolate = True  # interpolate pixels
 
-    # volshow will use volshow3 and rendering the isosurface if OpenGL
-    # version is >= 2.0. Otherwise, it will show slices with bars that you
-    # can move (much less useful).
-    volRGB = np.stack(((vol >= 0.99) * im[:, :, 0],
-                       (vol >= 0.99) * im[:, :, 1],
-                       (vol >= 0.99) * im[:, :, 2]), axis=3)
+    # volshow will use volshow3 and rendering the isosurface if OpenGL version is >= 2.0
+    # Otherwise, it will show slices with bars that you can move (much less useful).
+    volRGB = np.stack(((vol == 1) * im[:, :, 0],
+                       (vol == 1) * im[:, :, 1],
+                       (vol == 1) * im[:, :, 2]), axis=3)
 
     v = vv.volshow(volRGB, renderStyle='iso')
     v.transformations[1].sz = 0.5  # Z was twice as deep during training
@@ -42,7 +44,11 @@ def visualize(im, vol):
 
 
 if __name__ == "__main__":
-    trainset = dataloaders.FacesWith3DCoords(images_dir="300W-3D/AFW", mats_dir="300W-3D/AFW", transform=True)
-    im, vol = trainset[0]
-    visualize(im, vol)
+    args = get_args()
+    trainset = dataloaders.FacesWith3DCoords(
+        images_dir=args.images_dir, mats_dir=args.mats_dir, transform=args.transform
+    )
 
+    i = np.random.randint(len(trainset))
+    im, vol = trainset[i]
+    visualize(im, vol)
