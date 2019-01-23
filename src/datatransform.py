@@ -28,16 +28,13 @@ class Resize(object):
 
 class Translation(object):
     def __call__(self, image, tx, ty):
-        # get translation matrix
         M = np.float32([[1, 0, tx], [0, 1, ty]])
         return cv2.warpAffine(image, M, image.shape[:-1])
 
 
 class Rotation(object):
-    def __call__(self, image, angle):
-        # get rotation matrix
+    def __call__(self, image, alpha):
         size, _, _ = image.shape
-        alpha = np.random.randint(-45, 45)
         return rotate(image, alpha)
 
 
