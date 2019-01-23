@@ -50,10 +50,9 @@ class FacesWith3DCoords(Dataset):
             trans = datatransform.Translation()
             scale = datatransform.Scale()
 
-            alpha = 40
-            # img, mat = rot(img, alpha), rot(mat, alpha)
-            # img, mat = trans(img, tx, ty), trans(mat, ty, -tx)
-            # img, mat = scale(img, factor), scale(mat, factor)
+            img, mat = rot(img, alpha), rot(mat, alpha)
+            img, mat = trans(img, tx, ty), trans(mat, -ty, tx)
+            img, mat = scale(img, factor), scale(mat, factor)
 
         # resize image to 200 x 200 and mat to 192x192
         R = datatransform.Resize()
