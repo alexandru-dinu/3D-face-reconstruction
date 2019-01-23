@@ -38,9 +38,9 @@ class Rotation(object):
         return rotate(image, alpha)
 
 
-class FlipHorizontal(object):
-    def __call__(self, image):
-        return cv2.flip(image, 1)
+class Flip(object):
+    def __call__(self, image, type):
+        return cv2.flip(image, type)
 
 
 class Scale(object):

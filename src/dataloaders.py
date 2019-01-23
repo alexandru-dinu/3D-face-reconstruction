@@ -41,7 +41,12 @@ class FacesWith3DCoords(Dataset):
         for i in range(len(x)):
             mat[x[i], y[i], :z[i]] = 1
 
-        if self.transform:
+        if np.random.rand() < 0.2:
+            flip = datatransform.Flip()
+            # for visualization axis are flipped
+            img, mat = flip(img, 1), flip(mat, 0)
+
+        if np.random.rand() < 0.2 and self.transform:
             alpha = np.random.randint(-45, 45)
             tx, ty = np.random.randint(-15, 15), np.random.randint(-15, 15)
             factor = 0.85 + np.random.rand() * (1.15 - 0.85)
@@ -51,6 +56,7 @@ class FacesWith3DCoords(Dataset):
             scale = datatransform.Scale()
 
             img, mat = rot(img, alpha), rot(mat, alpha)
+            # for visualization axis are flipped
             img, mat = trans(img, tx, ty), trans(mat, -ty, tx)
             img, mat = scale(img, factor), scale(mat, factor)
 
