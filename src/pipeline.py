@@ -24,7 +24,8 @@ net.cuda()
 
 # criterion & optimiezer
 criterion = torch.nn.CrossEntropyLoss()
-optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=0.9)
+# optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=0.9)
+optimizer = optim.RMSprop(net.parameters(), lr=1e-4)
 
 
 def num_flat_features(x):
@@ -36,7 +37,7 @@ def num_flat_features(x):
 
 
 def train():
-    for epoch in range(1, 11):  # loop over the dataset multiple times
+    for epoch in range(1, 41):  # loop over the dataset multiple times
         print("=== Epoch", epoch, "===")
         running_loss = 0.0
 
@@ -63,11 +64,10 @@ def train():
             # print statistics
             running_loss += loss.item()
             if i % 5 == 0:
-                print('[%d, %5d] loss: %.3f' %
-                      (epoch, i, running_loss / 5))
+                print('[%2d, %5d] loss: %.8f' % (epoch, i, running_loss / 5))
                 running_loss = 0.0
 
-        torch.save(net, "simple_model")
+        torch.save(net.state_dict(), "../checkpoints/simple_model_%d" % epoch)
 
 
 if __name__ == "__main__":

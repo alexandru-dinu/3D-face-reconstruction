@@ -27,9 +27,9 @@ def visualize(im, vol):
 
     # volshow will use volshow3 and rendering the isosurface if OpenGL version is >= 2.0
     # Otherwise, it will show slices with bars that you can move (much less useful).
-    volRGB = np.stack(((vol == 1) * im[:, :, 0],
-                       (vol == 1) * im[:, :, 1],
-                       (vol == 1) * im[:, :, 2]), axis=3)
+    volRGB = np.stack(((vol >= 0.5) * im[:, :, 0],
+                       (vol >= 0.5) * im[:, :, 1],
+                       (vol >= 0.5) * im[:, :, 2]), axis=3)
 
     v = vv.volshow(volRGB, renderStyle='iso')
     v.transformations[1].sz = 0.5  # Z was twice as deep during training

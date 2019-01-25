@@ -39,8 +39,8 @@ class Rotation(object):
 
 
 class Flip(object):
-    def __call__(self, image, type):
-        return cv2.flip(image, type)
+    def __call__(self, image, mode):
+        return cv2.flip(image, mode)
 
 
 class Scale(object):
@@ -71,14 +71,13 @@ if __name__ == "__main__":
 
     # Transf = Translation()
     # Transf = Resize(192)
-    Transf = FlipHorizontal()
     # Transf = Scale()
-    timg2D = Transf(img2D.numpy().transpose(1, 2, 0))
+    # timg2D = Transf(img2D.numpy().transpose(1, 2, 0))
 
-    print(timg2D.shape)
-
-    cv2.imshow("Image", timg2D)
-    cv2.waitKey(0)
-
-    cv2.imshow("Orig image", img2D.numpy().transpose(1, 2, 0))
-    cv2.waitKey(0)
+    # print(timg2D.shape)
+    #
+    # cv2.imshow("Image", timg2D)
+    # cv2.waitKey(0)
+    #
+    # cv2.imshow("Orig image", img2D.numpy().transpose(1, 2, 0))
+    # cv2.waitKey(0)
