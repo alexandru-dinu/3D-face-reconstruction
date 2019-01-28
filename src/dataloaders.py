@@ -7,7 +7,8 @@ import torch
 from torch.utils.data import Dataset
 
 import datatransform
-from utils import get_args
+from utils import get_args, gaussian_distribution
+from tqdm import tqdm
 
 
 class FacesWith3DCoords(Dataset):
@@ -17,13 +18,14 @@ class FacesWith3DCoords(Dataset):
     """
 
     def __init__(self, images_dir: str, mats_dir: str, transform: bool = False):
-        self.images, self.mats = [], []
+        self.images, self.mats, self.lands = [], [], []
         self.transform = transform
 
-        for i in os.listdir(images_dir):
+        for i in os.listdir(images_dir)[:10]:
             if i.endswith(".jpg"):
                 self.images.append(os.path.join(images_dir, i))
                 self.mats.append(os.path.join(mats_dir, i.split(".")[0] + ".mat"))
+                self.lands.append(os.path.join(mats_dir, i.split(".")[0] + "_landmark.mat"))
 
         assert len(self.images) == len(self.mats)
 
@@ -33,6 +35,13 @@ class FacesWith3DCoords(Dataset):
         # img is H,W,C
         img = cv2.imread(self.images[index], cv2.IMREAD_COLOR)
         size, _, _ = img.shape
+
+        lands = []
+        x_lands, y_lands = scipy.io.loadmat(self.lands[index])['pt2d'].astype(np.int32)
+        for i in tqdm(range(len(x_lands))):
+            lands.append(gaussian_distribution(x_lands[i], y_lands[i]))
+        lands = np.array(lands)
+
 
         x, y, z = scipy.io.loadmat(self.mats[index])['Fitted_Face'].astype(np.int32)
         z = z - z.min()
@@ -69,10 +78,10 @@ class FacesWith3DCoords(Dataset):
 
         # resize image to 200 x 200 and mat to 192x192
         R = datatransform.Resize()
-        img, mat = R(img, 200), R(mat, 192)
+        img, mat = R(img, 200), R(mat, 184)
 
         # C, H, W
-        return torch.from_numpy(img.transpose(2, 0, 1)), torch.from_numpy(mat.transpose(2, 0, 1))
+        return torch.from_numpy(img.transpose(2, 0, 1)), torch.from_numpy(mat.transpose(2, 0, 1)), torch.from_numpy(lands)
 
     def __len__(self):
         return len(self.images)
@@ -80,14 +89,15 @@ class FacesWith3DCoords(Dataset):
 
 if __name__ == '__main__':
     args = get_args()
-    args.images_dir = "/home/robert/PycharmProjects/3DFaceReconstruction/300W-3D/ALL_DATA"
-    args.mats_dir = "/home/robert/PycharmProjects/3DFaceReconstruction/300W-3D/ALL_DATA"
+    args.images_dir = "/home/nemodrive2/dan_m/3D-face-reconstruction/src/300W-3D/AFW"
+    args.mats_dir = "/home/nemodrive2/dan_m/3D-face-reconstruction/src/300W-3D/AFW"
+    args.lands_dir = "/home/nemodrive2/dan_m/3D-face-reconstruction/src/300W-3D/AFW"
 
     d = FacesWith3DCoords(
         images_dir=args.images_dir, mats_dir=args.mats_dir, transform=args.transform
     )
 
-    i, m = d[np.random.randint(len(d))]
+    i, m, lands = d[np.random.randint(len(d))]
     # print(m)
 
     cv2.imshow("Image", i.numpy().transpose(1, 2, 0))
