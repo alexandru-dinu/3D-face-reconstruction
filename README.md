@@ -1,5 +1,9 @@
 # 3D-face-reconstruction
 
+### References
+- [paper](https://arxiv.org/pdf/1703.07834)
+- [supplementary](https://aaronsplace.co.uk/papers/jackson2017recon/supp.pdf)
+
 ### Datasets
 - [300W-3D](https://drive.google.com/file/d/0B7OEHD3T4eCkRFRPSXdFWEhRdlE/view?usp=sharing)
 - [300W-3D-Face](https://drive.google.com/file/d/0B7OEHD3T4eCkZmgzUWZfd2FVVWs/view?usp=sharing)
