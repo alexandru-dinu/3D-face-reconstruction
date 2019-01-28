@@ -49,7 +49,8 @@ class FacesWith3DCoords(Dataset):
         gray = np.zeros((size, size), dtype=np.float)
         for i in range(len(x)):
             gray[x[i], y[i]] = z[i]
-        gray = cv2.morphologyEx(gray, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)), iterations=2)
+        gray = cv2.morphologyEx(gray, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)))
+        gray = cv2.GaussianBlur(gray, ksize=(5, 5), sigmaX=3, sigmaY=3)
 
 
         mat = np.zeros((size, size, 200), dtype=np.uint8)
