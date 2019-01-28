@@ -24,7 +24,8 @@ net.cuda()
 
 # criterion & optimiezer
 criterion = torch.nn.CrossEntropyLoss()
-optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=0.9)
+# optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=0.9)
+optimizer = optim.RMSprop(net.parameters(), lr=1e-3)
 
 
 def num_flat_features(x):
@@ -36,7 +37,9 @@ def num_flat_features(x):
 
 
 def train():
-    for epoch in range(1, 11):  # loop over the dataset multiple times
+    running_avg = 0.0
+
+    for epoch in range(1, 41):  # loop over the dataset multiple times
         print("=== Epoch", epoch, "===")
         running_loss = 0.0
 
@@ -56,6 +59,9 @@ def train():
             out_imgs3D = out_imgs3D.reshape(-1, num_flat_features(out_imgs3D))
 
             loss = -torch.mean(imgs3D * torch.log(out_imgs3D) + (1 - imgs3D) * torch.log(1 - out_imgs3D))
+            # loss = torch.nn.MSELoss()(imgs3D, out_imgs3D)
+
+            running_avg = loss if i == 1 else running_avg * i / (i + 1) + loss / (i + 1)
 
             loss.backward()
             optimizer.step()
@@ -63,11 +69,10 @@ def train():
             # print statistics
             running_loss += loss.item()
             if i % 5 == 0:
-                print('[%d, %5d] loss: %.3f' %
-                      (epoch, i, running_loss / 5))
+                print('[%2d, %5d] loss: %.8f, run_avg: %.8f' % (epoch, i, running_loss / 5, running_avg))
                 running_loss = 0.0
 
-        torch.save(net, "simple_model")
+        torch.save(net.state_dict(), "../checkpoints/simple_model_%d" % epoch)
 
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 # own
+checkpoints/
 datasets/
 pre_trained_models/
 .idea/
