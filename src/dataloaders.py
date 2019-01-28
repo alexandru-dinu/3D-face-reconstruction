@@ -37,9 +37,16 @@ class FacesWith3DCoords(Dataset):
         x, y, z = scipy.io.loadmat(self.mats[index])['Fitted_Face'].astype(np.int32)
         z = z - z.min()
 
-        mat = np.zeros((size, size, 200), dtype=np.uint8)
+        gray = np.zeros((size, size), dtype=np.float)
         for i in range(len(x)):
-            mat[x[i], y[i], :z[i]] = 1
+            gray[x[i], y[i]] = z[i]
+        gray = cv2.morphologyEx(gray, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)), iterations=2)
+
+
+        mat = np.zeros((size, size, 200), dtype=np.uint8)
+        for i in range(size):
+            for j in range(size):
+                mat[i, j, :int(gray[i, j])] = 1
 
         if np.random.rand() < 0.2:
             flip = datatransform.Flip()
@@ -73,6 +80,8 @@ class FacesWith3DCoords(Dataset):
 
 if __name__ == '__main__':
     args = get_args()
+    args.images_dir = "/home/robert/PycharmProjects/3DFaceReconstruction/300W-3D/ALL_DATA"
+    args.mats_dir = "/home/robert/PycharmProjects/3DFaceReconstruction/300W-3D/ALL_DATA"
 
     d = FacesWith3DCoords(
         images_dir=args.images_dir, mats_dir=args.mats_dir, transform=args.transform
