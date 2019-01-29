@@ -17,7 +17,7 @@ def visualize(im, vol):
     im = im[:, :, ::-1]
 
     # resize image to 192 x 192
-    im = cv2.resize(im, (192, 192))
+    im = cv2.resize(im, (200, 200))
 
     t = vv.imshow(im)
     t.interpolate = True  # interpolate pixels

@@ -18,32 +18,36 @@ class FacesWith3DCoords(Dataset):
     """
 
 
-    def __init__(self, images_dir: str, mats_dir: str, transform: bool = False):
-        self.images, self.mats, self.lands = [], [], []
+    def __init__(self, images_dir: str, mats_dir: str, lands_dir: str, transform: bool = False):
         self.transform = transform
+        self.images, self.mats, self.lands = [], [], []
 
-        for i in os.listdir(images_dir)[:10]:
-            if i.endswith(".jpg"):
-                self.images.append(os.path.join(images_dir, i))
-                self.mats.append(os.path.join(mats_dir, i.split(".")[0] + ".mat"))
-                #self.lands.append(os.path.join(mats_dir, i.split(".")[0] + "_landmark.mat"))
+        for img in sorted(os.listdir(images_dir))[:100]:
+            name = img.split(".")[0]
 
-        assert len(self.images) == len(self.mats)
+            self.images += [os.path.join(images_dir, name + ".jpg")]
+            self.mats += [os.path.join(mats_dir, name + ".mat")]
+            self.lands += [os.path.join(lands_dir, name + ".mat")]
+
+        assert len(self.images) == len(self.mats) == len(self.lands)
+
 
 
     def __getitem__(self, index):
         assert 0 <= index < len(self.images)
-
         # img is H,W,C
         img = cv2.imread(self.images[index], cv2.IMREAD_COLOR)
         size, _, _ = img.shape
 
-        #lands = []
-        #x_lands, y_lands = scipy.io.loadmat(self.lands[index])['pt2d'].astype(np.int32)
-        #for i in tqdm(range(len(x_lands))):
-        #    lands.append(gaussian_distribution(x_lands[i], y_lands[i]))
-        #lands = np.array(lands)
+        # read landmarks
+        lands = np.zeros((68, size, size))
+        x_lands, y_lands = scipy.io.loadmat(self.lands[index])['pt2d'].astype(np.int32)
+        for i in range(len(x_lands)):
+            lands[i] = gaussian_distribution(x_lands[i], y_lands[i], size)
+        lands = np.transpose(lands, (1, 2, 0))
+        lands = datatransform.rotate(lands, -90)
 
+        # read 3D points
         x, y, z = scipy.io.loadmat(self.mats[index])['Fitted_Face'].astype(np.int32)
         z = z - z.min()
 
@@ -54,19 +58,18 @@ class FacesWith3DCoords(Dataset):
         gray = cv2.GaussianBlur(gray, ksize=(5, 5), sigmaX=3, sigmaY=3)
         gray = datatransform.rotate(np.expand_dims(gray, axis=2), alpha=90)
 
-
         mat = np.zeros((size, size, 200), dtype=np.uint8)
         #for i in range(size):
         #    for j in range(size):
         #        mat[i, j, :int(gray[i, j])] = 1
 
-        if np.random.rand() < -0.2:
+        if np.random.rand() < -1.2 and self.transform:
             flip = datatransform.Flip()
             # for visualization axis are flipped
             #img, mat = flip(img, 1), flip(mat, 1)
-            img, gray = flip(img, 1), flip(np.expand_dims(gray, axis=2), 1)
+            img, gray, lands = flip(img, 1), flip(np.expand_dims(gray, axis=2), 1), flip(lands, 1)
 
-        if np.random.rand() < -0.2 and self.transform:
+        if np.random.rand() < -1.2 and self.transform:
             alpha = np.random.randint(-45, 45)
             tx, ty = np.random.randint(-15, 15), np.random.randint(-15, 15)
             factor = 0.85 + np.random.rand() * (1.15 - 0.85)
@@ -78,22 +81,24 @@ class FacesWith3DCoords(Dataset):
             #img, mat = rot(img, alpha), rot(mat, alpha)
             #img, mat = trans(img, tx, ty), trans(mat, tx, ty)
             #img, mat = scale(img, factor), scale(mat, factor)
-            img, gray = rot(img, alpha), rot(np.expand_dims(gray, axis=2), alpha)
-            img, gray = trans(img, tx, ty), trans(np.expand_dims(gray, axis=2), tx, ty)
-            img, gray = scale(img, factor), scale(np.expand_dims(gray, axis=2), factor)
-
+            img, gray, lands = rot(img, alpha), rot(np.expand_dims(gray, axis=2), alpha), rot(lands, alpha)
+            img, gray, lands = trans(img, tx, ty), trans(np.expand_dims(gray, axis=2), tx, ty), trans(lands, tx, ty)
+            img, gray, lands = scale(img, factor), scale(np.expand_dims(gray, axis=2), factor), scale(lands, factor)
 
         # resize image to 200 x 200 and mat to 192x192
         R = datatransform.Resize()
         
         #img, mat = R(img, 200), R(mat, 184)
         gray = np.expand_dims(gray, axis=2)
-        img, gray = R(img, 200), R(gray, 192)
+        #print(img.shape, gray.shape, lands.shape)
+        img, gray, lands = R(img, 224), R(gray, 50), R(lands, 200)
         gray = np.expand_dims(gray, axis=2)
+        #gray = np.zeros_like(gray)
 
         # C, H, W
-        return torch.from_numpy(img.transpose(2, 0, 1)), torch.from_numpy(gray.transpose(2, 0, 1)),# torch.from_numpy(lands)
-
+        return torch.from_numpy(img.transpose(2, 0, 1)), torch.from_numpy(gray.transpose(2, 0, 1))#, torch.from_numpy(lands.transpose(2, 0, 1))
+        #img = np.concatenate([img, lands], axis=2)
+        #return torch.from_numpy(img.transpose(2, 0, 1)), torch.from_numpy(gray.transpose(2, 0, 1))
 
     def __len__(self):
         return len(self.images)
@@ -101,21 +106,24 @@ class FacesWith3DCoords(Dataset):
 
 if __name__ == '__main__':
     args = get_args()
-    args.images_dir = "/home/robert/PycharmProjects/3DFaceReconstruction/300W-3D/ALL_DATA"
-    args.mats_dir = "/home/robert/PycharmProjects/3DFaceReconstruction/300W-3D/ALL_DATA"
-    args.lands_dir = "/home/robert/PycharmProjects/3DFaceReconstruction/300W-3D/ALL_DATA"
+    args.images_dir = "/home/robert/PycharmProjects/3D-face-reconstruction/300W-3D-all/images"
+    args.mats_dir = "/home/robert/PycharmProjects/3D-face-reconstruction/300W-3D-all/3d-scans"
+    args.lands_dir = "/home/robert/PycharmProjects/3D-face-reconstruction/300W-3D-all/landmarks"
 
     d = FacesWith3DCoords(
-        images_dir=args.images_dir, mats_dir=args.mats_dir, transform=args.transform
+        images_dir=args.images_dir, mats_dir=args.mats_dir, lands_dir=args.lands_dir, transform=args.transform
     )
 
-    i, m  = d[1] #d[np.random.randint(len(d))]
+    i, m, l = d[0]#d[np.random.randint(len(d))]
     #i, m, lands = d[np.random.randint(len(d))]
     # print(m)
+    import matplotlib.pyplot as plt
+    #plt.imshow(l.numpy().sum(axis=0))
+    #plt.show()
 
-    cv2.imshow("Image", i.numpy().transpose(1, 2, 0))
-    cv2.waitKey(0)
+    l3 = np.zeros((3, 450, 450))
+    l3 += l.numpy().sum(axis=0)
+    l3 = np.transpose(l3, (1, 2, 0))
 
-    cv2.imshow("Image", m.numpy().transpose(1, 2, 0))
-    cv2.waitKey(0)
-
+    plt.imshow(l3 * 10 + i.numpy().transpose(1, 2, 0) / 255.0)
+    plt.show()
