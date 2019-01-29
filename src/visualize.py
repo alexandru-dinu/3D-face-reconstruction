@@ -3,7 +3,6 @@ import numpy as np
 import visvis as vv
 
 import dataloaders
-from datatransform import rotate
 from utils import get_args
 
 
@@ -13,11 +12,9 @@ def visualize(im, vol):
     print("Image shape:", im.shape)
     print("Volume shape:", vol.shape)
 
-    # some inversion for overlap with 3d representation
+    # overlap with 3d representation + BGR->RGB
     im = im.transpose(1, 2, 0)  # H,W,C
-
-    # BGR to RGB and rotate (axis inversion)
-    im = rotate(im[:, :, ::-1], -90)
+    im = im[:, :, ::-1]
 
     # resize image to 192 x 192
     im = cv2.resize(im, (192, 192))
