@@ -32,7 +32,6 @@ class FacesWith3DCoords(Dataset):
         assert len(self.images) == len(self.mats) == len(self.lands)
 
 
-
     def __getitem__(self, index):
         assert 0 <= index < len(self.images)
         # img is H,W,C
@@ -59,14 +58,14 @@ class FacesWith3DCoords(Dataset):
         gray = datatransform.rotate(np.expand_dims(gray, axis=2), alpha=90)
 
         mat = np.zeros((size, size, 200), dtype=np.uint8)
-        #for i in range(size):
+        # for i in range(size):
         #    for j in range(size):
         #        mat[i, j, :int(gray[i, j])] = 1
 
         if np.random.rand() < -1.2 and self.transform:
             flip = datatransform.Flip()
             # for visualization axis are flipped
-            #img, mat = flip(img, 1), flip(mat, 1)
+            # img, mat = flip(img, 1), flip(mat, 1)
             img, gray, lands = flip(img, 1), flip(np.expand_dims(gray, axis=2), 1), flip(lands, 1)
 
         if np.random.rand() < -1.2 and self.transform:
@@ -78,27 +77,28 @@ class FacesWith3DCoords(Dataset):
             trans = datatransform.Translation()
             scale = datatransform.Scale()
 
-            #img, mat = rot(img, alpha), rot(mat, alpha)
-            #img, mat = trans(img, tx, ty), trans(mat, tx, ty)
-            #img, mat = scale(img, factor), scale(mat, factor)
+            # img, mat = rot(img, alpha), rot(mat, alpha)
+            # img, mat = trans(img, tx, ty), trans(mat, tx, ty)
+            # img, mat = scale(img, factor), scale(mat, factor)
             img, gray, lands = rot(img, alpha), rot(np.expand_dims(gray, axis=2), alpha), rot(lands, alpha)
             img, gray, lands = trans(img, tx, ty), trans(np.expand_dims(gray, axis=2), tx, ty), trans(lands, tx, ty)
             img, gray, lands = scale(img, factor), scale(np.expand_dims(gray, axis=2), factor), scale(lands, factor)
 
         # resize image to 200 x 200 and mat to 192x192
         R = datatransform.Resize()
-        
-        #img, mat = R(img, 200), R(mat, 184)
+
+        # img, mat = R(img, 200), R(mat, 184)
         gray = np.expand_dims(gray, axis=2)
-        #print(img.shape, gray.shape, lands.shape)
+        # print(img.shape, gray.shape, lands.shape)
         img, gray, lands = R(img, 224), R(gray, 50), R(lands, 200)
         gray = np.expand_dims(gray, axis=2)
-        #gray = np.zeros_like(gray)
+        # gray = np.zeros_like(gray)
 
         # C, H, W
-        return torch.from_numpy(img.transpose(2, 0, 1)), torch.from_numpy(gray.transpose(2, 0, 1))#, torch.from_numpy(lands.transpose(2, 0, 1))
-        #img = np.concatenate([img, lands], axis=2)
-        #return torch.from_numpy(img.transpose(2, 0, 1)), torch.from_numpy(gray.transpose(2, 0, 1))
+        return torch.from_numpy(img.transpose(2, 0, 1)), torch.from_numpy(gray.transpose(2, 0, 1))  # , torch.from_numpy(lands.transpose(2, 0, 1))
+        # img = np.concatenate([img, lands], axis=2)
+        # return torch.from_numpy(img.transpose(2, 0, 1)), torch.from_numpy(gray.transpose(2, 0, 1))
+
 
     def __len__(self):
         return len(self.images)
@@ -114,12 +114,13 @@ if __name__ == '__main__':
         images_dir=args.images_dir, mats_dir=args.mats_dir, lands_dir=args.lands_dir, transform=args.transform
     )
 
-    i, m, l = d[0]#d[np.random.randint(len(d))]
-    #i, m, lands = d[np.random.randint(len(d))]
+    i, m, l = d[0]  # d[np.random.randint(len(d))]
+    # i, m, lands = d[np.random.randint(len(d))]
     # print(m)
     import matplotlib.pyplot as plt
-    #plt.imshow(l.numpy().sum(axis=0))
-    #plt.show()
+
+    # plt.imshow(l.numpy().sum(axis=0))
+    # plt.show()
 
     l3 = np.zeros((3, 450, 450))
     l3 += l.numpy().sum(axis=0)

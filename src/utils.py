@@ -1,6 +1,7 @@
 import argparse
 import numpy as np
 
+
 def get_args():
     parser = argparse.ArgumentParser()
 
@@ -14,14 +15,19 @@ def get_args():
     return parser.parse_args()
 
 
+def to_cuda(data, use_cuda):
+    input_ = data.float()
+    if use_cuda:
+        input_ = input_.cuda()
+    return input_
+
 
 def gaussian_distribution(center_x, center_y, size=400):
-
     img = np.zeros((size, size))
-    for i in  range(center_x  - 10, center_x + 10):
-        for j in  range(center_y - 10, center_y + 10):
+    for i in range(center_x - 10, center_x + 10):
+        for j in range(center_y - 10, center_y + 10):
             exp_fact = ((i - center_x) ** 2) / 2 + ((j - center_y) ** 2) / 2
-            img[i,j] = 1 / np.sqrt(2 * np.pi) * np.exp(-exp_fact)
+            img[i, j] = 1 / np.sqrt(2 * np.pi) * np.exp(-exp_fact)
 
     img /= np.sum(img)
     return img

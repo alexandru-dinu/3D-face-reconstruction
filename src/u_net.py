@@ -19,7 +19,6 @@ class UNet(nn.Module):
         self.up3 = Up(128, 64)
         self.up4 = Up(64, 64)
 
-
         self.outc = torch.nn.Conv2d(
             in_channels=64,
             out_channels=n_classes,
@@ -27,6 +26,7 @@ class UNet(nn.Module):
             stride=1,
             padding=0
         )
+
 
     def forward(self, x):
         x1 = self.inc(x)
@@ -43,8 +43,4 @@ class UNet(nn.Module):
         return x
 
 
-def to_cuda(data, use_cuda):
-    input_ = data.float()
-    if use_cuda:
-        input_ = input_.cuda()
-    return input_
+

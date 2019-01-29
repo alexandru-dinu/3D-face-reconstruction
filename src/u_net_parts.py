@@ -8,6 +8,7 @@ import torch.nn.functional as F
 class DoubleConv(nn.Module):
     '''(conv => BN => ReLU) * 2'''
 
+
     def __init__(self, in_ch, out_ch, padding=0):
         super(DoubleConv, self).__init__()
         self.conv = nn.Sequential(
@@ -27,6 +28,7 @@ class DoubleConv(nn.Module):
             nn.ReLU(inplace=True)
         )
 
+
     def forward(self, x):
         x = self.conv(x)
         return x
@@ -42,6 +44,7 @@ class Down(nn.Module):
             ),
             DoubleConv(in_ch, out_ch, padding)
         )
+
 
     def forward(self, x):
         x = self.down_conv(x)
@@ -64,6 +67,7 @@ class Up(nn.Module):
 
         self.conv = DoubleConv(in_ch, out_ch, padding)
 
+
     def forward(self, x1, x2):
         x1 = self.up(x1)
 
@@ -79,6 +83,6 @@ class Up(nn.Module):
         # https://github.com/xiaopeng-liao/Pytorch-UNet/commit/8ebac70e633bac59fc22bb5195e513d5832fb3bd
 
         x = x1 + x2
-        #x = torch.cat([x2, x1], dim=1)
+        # x = torch.cat([x2, x1], dim=1)
         x = self.conv(x)
         return x

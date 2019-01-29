@@ -2,15 +2,15 @@ import torch
 import cv2
 import numpy as np
 import visualize
-from u_net import UNet, to_cuda
+from u_net import UNet
 import dataloaders
-from utils import get_args
+from utils import get_args, to_cuda
 import torch.nn.functional as F
 
 nn = torch.load("simple_model2").cuda()
-#img = cv2.imread("test2.jpg", cv2.IMREAD_COLOR)
-#img = cv2.resize(img, (200, 200))
-#img = torch.from_numpy(im.transpose(2, 0, 1))
+# img = cv2.imread("test2.jpg", cv2.IMREAD_COLOR)
+# img = cv2.resize(img, (200, 200))
+# img = torch.from_numpy(im.transpose(2, 0, 1))
 
 args = get_args()
 trainset = dataloaders.FacesWith3DCoords(
@@ -19,7 +19,6 @@ trainset = dataloaders.FacesWith3DCoords(
 
 i = np.random.randint(len(trainset))
 img, vol = trainset[1]
-
 
 img = img.unsqueeze(0)
 img = to_cuda(img, True)
