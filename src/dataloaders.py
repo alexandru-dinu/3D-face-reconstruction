@@ -17,6 +17,7 @@ class FacesWith3DCoords(Dataset):
     Coords are in 300W-3D-Face/<name>/*.mat
     """
 
+
     def __init__(self, images_dir: str, mats_dir: str, transform: bool = False):
         self.images, self.mats, self.lands = [], [], []
         self.transform = transform
@@ -28,6 +29,7 @@ class FacesWith3DCoords(Dataset):
                 self.lands.append(os.path.join(mats_dir, i.split(".")[0] + "_landmark.mat"))
 
         assert len(self.images) == len(self.mats)
+
 
     def __getitem__(self, index):
         assert 0 <= index < len(self.images)
@@ -42,7 +44,6 @@ class FacesWith3DCoords(Dataset):
             lands.append(gaussian_distribution(x_lands[i], y_lands[i]))
         lands = np.array(lands)
 
-
         x, y, z = scipy.io.loadmat(self.mats[index])['Fitted_Face'].astype(np.int32)
         z = z - z.min()
 
@@ -51,7 +52,7 @@ class FacesWith3DCoords(Dataset):
             gray[x[i], y[i]] = z[i]
         gray = cv2.morphologyEx(gray, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)))
         gray = cv2.GaussianBlur(gray, ksize=(5, 5), sigmaX=3, sigmaY=3)
-
+        gray = datatransform.rotate(np.expand_dims(gray, axis=2), alpha=90)
 
         mat = np.zeros((size, size, 200), dtype=np.uint8)
         for i in range(size):
@@ -61,7 +62,7 @@ class FacesWith3DCoords(Dataset):
         if np.random.rand() < 0.2:
             flip = datatransform.Flip()
             # for visualization axis are flipped
-            img, mat = flip(img, 1), flip(mat, 0)
+            img, mat = flip(img, 1), flip(mat, 1)
 
         if np.random.rand() < 0.2 and self.transform:
             alpha = np.random.randint(-45, 45)
@@ -74,7 +75,7 @@ class FacesWith3DCoords(Dataset):
 
             img, mat = rot(img, alpha), rot(mat, alpha)
             # for visualization axis are flipped
-            img, mat = trans(img, tx, ty), trans(mat, -ty, tx)
+            img, mat = trans(img, tx, ty), trans(mat, tx, ty)
             img, mat = scale(img, factor), scale(mat, factor)
 
         # resize image to 200 x 200 and mat to 192x192
@@ -83,6 +84,7 @@ class FacesWith3DCoords(Dataset):
 
         # C, H, W
         return torch.from_numpy(img.transpose(2, 0, 1)), torch.from_numpy(mat.transpose(2, 0, 1)), torch.from_numpy(lands)
+
 
     def __len__(self):
         return len(self.images)
