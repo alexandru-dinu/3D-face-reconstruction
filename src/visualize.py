@@ -24,6 +24,7 @@ def visualize(im, vol):
 
     # volshow will use volshow3 and rendering the isosurface if OpenGL version is >= 2.0
     # Otherwise, it will show slices with bars that you can move (much less useful).
+    im = np.ones_like(im)
     volRGB = np.stack(((vol >= 0.5) * im[:, :, 0],
                        (vol >= 0.5) * im[:, :, 1],
                        (vol >= 0.5) * im[:, :, 2]), axis=3)
@@ -42,6 +43,9 @@ def visualize(im, vol):
 
 if __name__ == "__main__":
     args = get_args()
+    args.images_dir = "/home/robert/PycharmProjects/3DFaceReconstruction/300W-3D/ALL_DATA"
+    args.mats_dir = "/home/robert/PycharmProjects/3DFaceReconstruction/300W-3D/ALL_DATA"
+
     trainset = dataloaders.FacesWith3DCoords(
         images_dir=args.images_dir, mats_dir=args.mats_dir, transform=args.transform
     )

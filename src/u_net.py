@@ -22,7 +22,7 @@ class UNet(nn.Module):
 
         self.outc = torch.nn.Conv2d(
             in_channels=64,
-            out_channels=200,
+            out_channels=n_classes,
             kernel_size=(1, 1),
             stride=1,
             padding=0

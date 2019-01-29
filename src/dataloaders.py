@@ -26,7 +26,7 @@ class FacesWith3DCoords(Dataset):
             if i.endswith(".jpg"):
                 self.images.append(os.path.join(images_dir, i))
                 self.mats.append(os.path.join(mats_dir, i.split(".")[0] + ".mat"))
-                self.lands.append(os.path.join(mats_dir, i.split(".")[0] + "_landmark.mat"))
+                #self.lands.append(os.path.join(mats_dir, i.split(".")[0] + "_landmark.mat"))
 
         assert len(self.images) == len(self.mats)
 
@@ -38,11 +38,11 @@ class FacesWith3DCoords(Dataset):
         img = cv2.imread(self.images[index], cv2.IMREAD_COLOR)
         size, _, _ = img.shape
 
-        lands = []
-        x_lands, y_lands = scipy.io.loadmat(self.lands[index])['pt2d'].astype(np.int32)
-        for i in tqdm(range(len(x_lands))):
-            lands.append(gaussian_distribution(x_lands[i], y_lands[i]))
-        lands = np.array(lands)
+        #lands = []
+        #x_lands, y_lands = scipy.io.loadmat(self.lands[index])['pt2d'].astype(np.int32)
+        #for i in tqdm(range(len(x_lands))):
+        #    lands.append(gaussian_distribution(x_lands[i], y_lands[i]))
+        #lands = np.array(lands)
 
         x, y, z = scipy.io.loadmat(self.mats[index])['Fitted_Face'].astype(np.int32)
         z = z - z.min()
@@ -54,17 +54,19 @@ class FacesWith3DCoords(Dataset):
         gray = cv2.GaussianBlur(gray, ksize=(5, 5), sigmaX=3, sigmaY=3)
         gray = datatransform.rotate(np.expand_dims(gray, axis=2), alpha=90)
 
-        mat = np.zeros((size, size, 200), dtype=np.uint8)
-        for i in range(size):
-            for j in range(size):
-                mat[i, j, :int(gray[i, j])] = 1
 
-        if np.random.rand() < 0.2:
+        mat = np.zeros((size, size, 200), dtype=np.uint8)
+        #for i in range(size):
+        #    for j in range(size):
+        #        mat[i, j, :int(gray[i, j])] = 1
+
+        if np.random.rand() < -0.2:
             flip = datatransform.Flip()
             # for visualization axis are flipped
-            img, mat = flip(img, 1), flip(mat, 1)
+            #img, mat = flip(img, 1), flip(mat, 1)
+            img, gray = flip(img, 1), flip(np.expand_dims(gray, axis=2), 1)
 
-        if np.random.rand() < 0.2 and self.transform:
+        if np.random.rand() < -0.2 and self.transform:
             alpha = np.random.randint(-45, 45)
             tx, ty = np.random.randint(-15, 15), np.random.randint(-15, 15)
             factor = 0.85 + np.random.rand() * (1.15 - 0.85)
@@ -73,17 +75,24 @@ class FacesWith3DCoords(Dataset):
             trans = datatransform.Translation()
             scale = datatransform.Scale()
 
-            img, mat = rot(img, alpha), rot(mat, alpha)
-            # for visualization axis are flipped
-            img, mat = trans(img, tx, ty), trans(mat, tx, ty)
-            img, mat = scale(img, factor), scale(mat, factor)
+            #img, mat = rot(img, alpha), rot(mat, alpha)
+            #img, mat = trans(img, tx, ty), trans(mat, tx, ty)
+            #img, mat = scale(img, factor), scale(mat, factor)
+            img, gray = rot(img, alpha), rot(np.expand_dims(gray, axis=2), alpha)
+            img, gray = trans(img, tx, ty), trans(np.expand_dims(gray, axis=2), tx, ty)
+            img, gray = scale(img, factor), scale(np.expand_dims(gray, axis=2), factor)
+
 
         # resize image to 200 x 200 and mat to 192x192
         R = datatransform.Resize()
-        img, mat = R(img, 200), R(mat, 184)
+        
+        #img, mat = R(img, 200), R(mat, 184)
+        gray = np.expand_dims(gray, axis=2)
+        img, gray = R(img, 200), R(gray, 192)
+        gray = np.expand_dims(gray, axis=2)
 
         # C, H, W
-        return torch.from_numpy(img.transpose(2, 0, 1)), torch.from_numpy(mat.transpose(2, 0, 1)), torch.from_numpy(lands)
+        return torch.from_numpy(img.transpose(2, 0, 1)), torch.from_numpy(gray.transpose(2, 0, 1)),# torch.from_numpy(lands)
 
 
     def __len__(self):
@@ -92,16 +101,21 @@ class FacesWith3DCoords(Dataset):
 
 if __name__ == '__main__':
     args = get_args()
-    args.images_dir = "/home/nemodrive2/dan_m/3D-face-reconstruction/src/300W-3D/AFW"
-    args.mats_dir = "/home/nemodrive2/dan_m/3D-face-reconstruction/src/300W-3D/AFW"
-    args.lands_dir = "/home/nemodrive2/dan_m/3D-face-reconstruction/src/300W-3D/AFW"
+    args.images_dir = "/home/robert/PycharmProjects/3DFaceReconstruction/300W-3D/ALL_DATA"
+    args.mats_dir = "/home/robert/PycharmProjects/3DFaceReconstruction/300W-3D/ALL_DATA"
+    args.lands_dir = "/home/robert/PycharmProjects/3DFaceReconstruction/300W-3D/ALL_DATA"
 
     d = FacesWith3DCoords(
         images_dir=args.images_dir, mats_dir=args.mats_dir, transform=args.transform
     )
 
-    i, m, lands = d[np.random.randint(len(d))]
+    i, m  = d[1] #d[np.random.randint(len(d))]
+    #i, m, lands = d[np.random.randint(len(d))]
     # print(m)
 
     cv2.imshow("Image", i.numpy().transpose(1, 2, 0))
     cv2.waitKey(0)
+
+    cv2.imshow("Image", m.numpy().transpose(1, 2, 0))
+    cv2.waitKey(0)
+
