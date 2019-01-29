@@ -24,6 +24,10 @@ def visualize(im, vol):
 
     # volshow will use volshow3 and rendering the isosurface if OpenGL version is >= 2.0
     # Otherwise, it will show slices with bars that you can move (much less useful).
+    im = (im * 128 + 128).astype(np.uint8)
+    #im = np.ones_like(im)
+
+
     volRGB = np.stack(((vol >= 0.5) * im[:, :, 0],
                        (vol >= 0.5) * im[:, :, 1],
                        (vol >= 0.5) * im[:, :, 2]), axis=3)
@@ -47,5 +51,5 @@ if __name__ == "__main__":
     )
 
     i = np.random.randint(len(trainset))
-    im, vol = trainset[i]
+    im, vol = trainset[0]
     visualize(im, vol)
