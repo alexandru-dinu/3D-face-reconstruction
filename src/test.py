@@ -7,23 +7,32 @@ from u_net import UNet, to_cuda
 from utils import get_args
 from hourglass import StackedHourGlass
 from visualize import visualize
+import cv2
 
 if __name__ == '__main__':
     args = get_args()
-    data = dataloaders.FacesWith3DCoords(
-        images_dir=args.images_dir, mats_dir=args.mats_dir, transform=args.transform
-    )
+
+    #data = dataloaders.FacesWith3DCoords(
+    #    images_dir=args.images_dir, mats_dir=args.mats_dir, transform=args.transform
+    #)
+
+    img = cv2.imread("../test/emma.jpg", cv2.IMREAD_COLOR)
+    img = cv2.resize(img, (128,128), interpolation=cv2.INTER_AREA)
+    img = torch.from_numpy(img.transpose(2, 0, 1)).float()
+    img = (img - 128) / 128.0
 
     #model = UNet(3, 0)
-    model = StackedHourGlass(nChannels=256, nStack=2, nModules=2, numReductions=4, nOutputs=200)
+    model = StackedHourGlass(nChannels=224, nStack=2, nModules=2, numReductions=4, nOutputs=200)
     #model = net = torch.nn.Sequential(UNet(3, 0), UNet(200, 0) )
     model.cuda()
     model.load_state_dict(torch.load(args.checkpoint))
     model.eval()
     print(f"Loaded model {args.checkpoint}")
 
-    i = np.random.randint(len(data))
-    img, _ = data[0]
+    #i = np.random.randint(len(data))
+
+
+    #img, _ = data[0]
 
     img = to_cuda(img.unsqueeze(0), True)
     out = F.sigmoid(model(img))

@@ -13,7 +13,7 @@ class BnReluConv(nn.Module):
 
         self.bn = nn.BatchNorm2d(self.inChannels)
         self.conv = nn.Conv2d(self.inChannels, self.outChannels, self.kernelSize, self.stride, self.padding)
-        self.relu = nn.ReLU()
+        self.relu = nn.ReLU(inplace=True)
 
     def forward(self, x):
         x = self.bn(x)
@@ -72,17 +72,3 @@ class Residual(nn.Module):
         out = out + self.cb(x)
         out = out + self.skip(x)
         return out
-
-
-class myUpsample(nn.Module):
-
-    def __init__(self):
-        super(myUpsample, self).__init__()
-
-    def forward(self, x):
-
-        x1 = x[:, :, :, None, :, None]
-        x1 = x1.expand(-1, -1, -1, 2, -1, 2)
-        x1 = x1.reshape(x.size(0), x.size(1), x.size(2) * 2, x.size(3) * 3)
-
-        return x1

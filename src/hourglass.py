@@ -6,7 +6,7 @@ from hour_glass_parts import *
 
 class Hourglass(nn.Module):
     """docstring for Hourglass"""
-    def __init__(self, nChannels = 256, numReductions = 4, nModules = 2, poolKernel = (2,2), poolStride = (2,2), upSampleKernel = 2):
+    def __init__(self, nChannels = 256, numReductions = 4, nModules = 2, poolKernel = (3,3), poolStride = (3,3), upSampleKernel = 3):
         super(Hourglass, self).__init__()
         self.numReductions = numReductions
         self.nModules = nModules
@@ -72,11 +72,12 @@ class Hourglass(nn.Module):
         out2 = x
         out2 = self.mp(out2)
         out2 = self.afterpool(out2)
-        if self.numReductions>1:
+        if self.numReductions > 1:
             out2 = self.hg(out2)
         else:
             out2 = self.num1res(out2)
         out2 = self.lowres(out2)
+
         out2 = self.up(out2)
 
         diffY = out1.size()[2] - out2.size()[2]
@@ -91,7 +92,7 @@ class Hourglass(nn.Module):
 
 class StackedHourGlass(nn.Module):
     """docstring for StackedHourGlass"""
-    def __init__(self, nChannels, nStack, nModules, numReductions, nOutputs):
+    def __init__(self, nChannels, nStack, nModules, numReductions, nOutputs, nInputs=3):
         super(StackedHourGlass, self).__init__()
         self.nChannels = nChannels
         self.nStack = nStack
@@ -99,7 +100,7 @@ class StackedHourGlass(nn.Module):
         self.numReductions = numReductions
         self.nOutputs = nOutputs
 
-        self.res1 = Residual(3, 64)
+        self.res1 = Residual(nInputs, 64)
         self.mp = nn.MaxPool2d(2, 2)
         self.res2 = Residual(64, 128)
         self.res3 = Residual(128, self.nChannels)

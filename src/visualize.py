@@ -17,7 +17,7 @@ def visualize(im, vol):
     im = im[:, :, ::-1]
 
     # resize image to 192 x 192
-    im = cv2.resize(im, (192, 192))
+    im = cv2.resize(im, (128, 128))
 
     t = vv.imshow(im)
     t.interpolate = True  # interpolate pixels
@@ -46,10 +46,14 @@ def visualize(im, vol):
 
 if __name__ == "__main__":
     args = get_args()
+    args.images_dir = "/home/nemodrive2/dan_m/3D-face-reconstruction/300W-3D-all/images/"
+    args.mats_dir = "/home/nemodrive2/dan_m/3D-face-reconstruction/300W-3D-all/3d-scans/"
+    args.lands_dir = "/home/nemodrive2/dan_m/3D-face-reconstruction/300W-3D-all/landmarks/"
+
     trainset = dataloaders.FacesWith3DCoords(
         images_dir=args.images_dir, mats_dir=args.mats_dir, transform=args.transform
     )
 
     i = np.random.randint(len(trainset))
-    im, vol = trainset[0]
+    im, vol, lands = trainset[i]
     visualize(im, vol)

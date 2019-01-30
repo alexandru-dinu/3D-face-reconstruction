@@ -8,6 +8,7 @@ def get_args():
     parser.add_argument("--mats_dir", type=str)
     parser.add_argument("--lands_dir", type=str)
     parser.add_argument("--transform", action="store_true")
+    parser.add_argument("--resume", action="store_true")
 
     parser.add_argument("--checkpoint", type=str, help="path to saved model")
 
@@ -21,7 +22,7 @@ def gaussian_distribution(center_x, center_y, size=400):
     for i in  range(center_x  - 10, center_x + 10):
         for j in  range(center_y - 10, center_y + 10):
             exp_fact = ((i - center_x) ** 2) / 2 + ((j - center_y) ** 2) / 2
-            img[i,j] = 1 / np.sqrt(2 * np.pi) * np.exp(-exp_fact)
+            img[i, size - 1 - j] = 1 / np.sqrt(2 * np.pi) * np.exp(-exp_fact)
 
     img /= np.sum(img)
     return img
