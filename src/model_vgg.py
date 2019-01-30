@@ -1,9 +1,9 @@
-import torch
+import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.models
 
 
-class VGGModel(torch.nn.Module):
+class VGGModel(nn.Module):
     def __init__(self, out_size):
         super(VGGModel, self).__init__()
         self.feature = torchvision.models.vgg19(pretrained=True).features
@@ -11,15 +11,20 @@ class VGGModel(torch.nn.Module):
         for p in self.feature.parameters():
             p.requires_grad = False
 
-        # last conv gives 7x7x512 = 25088
-        self.linear1 = torch.nn.Linear(25088, out_size)
-        self.linear2 = torch.nn.Linear(out_size, out_size)
+        self.gen = nn.Sequential(
+            nn.Linear(25088, out_size),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=0.4),
+
+            nn.Linear(out_size, out_size),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=0.4)
+        )
 
 
     def forward(self, x):
         x = self.feature(x)
         x = x.view(x.size(0), -1)
-        x = self.linear1(x)
-        x = self.linear2(x)
-        x = F.relu(x)
-        return x
+        x = self.gen(x)
+
+        return F.relu(x)
