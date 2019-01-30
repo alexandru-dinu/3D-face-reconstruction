@@ -22,8 +22,10 @@ class FacesWith3DCoords(Dataset):
         self.transform = transform
         self.images, self.mats, self.lands = [], [], []
 
-        for img in sorted(os.listdir(images_dir))[:100]:
+        for img in sorted(os.listdir(images_dir)):
             name = img.split(".")[0]
+            if name != "AFW_134212_1":
+                continue
 
             self.images += [os.path.join(images_dir, name + ".jpg")]
             self.mats += [os.path.join(mats_dir, name + ".mat")]
@@ -44,7 +46,7 @@ class FacesWith3DCoords(Dataset):
         for i in range(len(x_lands)):
             lands[i] = gaussian_distribution(x_lands[i], y_lands[i], size)
         lands = np.transpose(lands, (1, 2, 0))
-        lands = datatransform.rotate(lands, -90)
+        lands = datatransform.rotate(lands, 90)
 
         # read 3D points
         x, y, z = scipy.io.loadmat(self.mats[index])['Fitted_Face'].astype(np.int32)
@@ -52,15 +54,16 @@ class FacesWith3DCoords(Dataset):
 
         gray = np.zeros((size, size), dtype=np.float)
         for i in range(len(x)):
-            gray[x[i], y[i]] = z[i]
+            gray[x[i], y[i]] = max(z[i], gray[x[i], y[i]])
+
         gray = cv2.morphologyEx(gray, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)))
         gray = cv2.GaussianBlur(gray, ksize=(5, 5), sigmaX=3, sigmaY=3)
         gray = datatransform.rotate(np.expand_dims(gray, axis=2), alpha=90)
 
         mat = np.zeros((size, size, 200), dtype=np.uint8)
-        # for i in range(size):
-        #    for j in range(size):
-        #        mat[i, j, :int(gray[i, j])] = 1
+        for i in range(size):
+           for j in range(size):
+                mat[i, j, :int(gray[i, j])] = 1
 
         if np.random.rand() < -1.2 and self.transform:
             flip = datatransform.Flip()
@@ -90,14 +93,14 @@ class FacesWith3DCoords(Dataset):
         # img, mat = R(img, 200), R(mat, 184)
         gray = np.expand_dims(gray, axis=2)
         # print(img.shape, gray.shape, lands.shape)
-        img, gray, lands = R(img, 224), R(gray, 50), R(lands, 200)
+        img, mat, lands = R(img, 200), R(mat, 200), R(lands, 192)
         gray = np.expand_dims(gray, axis=2)
-        # gray = np.zeros_like(gray)
 
         # C, H, W
-        return torch.from_numpy(img.transpose(2, 0, 1)), torch.from_numpy(gray.transpose(2, 0, 1))  # , torch.from_numpy(lands.transpose(2, 0, 1))
+        return torch.from_numpy(img.transpose(2, 0, 1)), torch.from_numpy(mat.transpose(2, 0, 1)), torch.from_numpy(lands.transpose(2, 0, 1))
         # img = np.concatenate([img, lands], axis=2)
-        # return torch.from_numpy(img.transpose(2, 0, 1)), torch.from_numpy(gray.transpose(2, 0, 1))
+        #img = img - 128.0
+        #return torch.from_numpy(img.transpose(2, 0, 1)), torch.from_numpy(gray.transpose(2, 0, 1))
 
 
     def __len__(self):
@@ -114,17 +117,18 @@ if __name__ == '__main__':
         images_dir=args.images_dir, mats_dir=args.mats_dir, lands_dir=args.lands_dir, transform=args.transform
     )
 
-    i, m, l = d[0]  # d[np.random.randint(len(d))]
-    # i, m, lands = d[np.random.randint(len(d))]
-    # print(m)
-    import matplotlib.pyplot as plt
+    for idx in range(10):
+        i, m, l = d[idx]  # d[np.random.randint(len(d))]
+        # i, m, lands = d[np.random.randint(len(d))]
+        # print(m)
+        import matplotlib.pyplot as plt
 
-    # plt.imshow(l.numpy().sum(axis=0))
-    # plt.show()
+        # plt.imshow(l.numpy().sum(axis=0))
+        # plt.show()
 
-    l3 = np.zeros((3, 450, 450))
-    l3 += l.numpy().sum(axis=0)
-    l3 = np.transpose(l3, (1, 2, 0))
+        l3 = np.zeros((3, 200, 200))
+        l3 += l.numpy().sum(axis=0)
+        l3 = np.transpose(l3, (1, 2, 0))
 
-    plt.imshow(l3 * 10 + i.numpy().transpose(1, 2, 0) / 255.0)
-    plt.show()
+        plt.imshow(l3 * 10 + i.numpy().transpose(1, 2, 0) / 255.0)
+        plt.show()
