@@ -6,7 +6,9 @@ from hour_glass_parts import *
 
 class Hourglass(nn.Module):
     """docstring for Hourglass"""
-    def __init__(self, nChannels = 256, numReductions = 4, nModules = 2, poolKernel = (3,3), poolStride = (3,3), upSampleKernel = 3):
+
+
+    def __init__(self, nChannels=256, numReductions=4, nModules=2, poolKernel=(3, 3), poolStride=(3, 3), upSampleKernel=3):
         super(Hourglass, self).__init__()
         self.numReductions = numReductions
         self.nModules = nModules
@@ -40,11 +42,11 @@ class Hourglass(nn.Module):
         self.afterpool = nn.Sequential(*_afterpool)
 
         if (numReductions > 1):
-            self.hg = Hourglass(self.nChannels, self.numReductions-1, self.nModules, self.poolKernel, self.poolStride)
+            self.hg = Hourglass(self.nChannels, self.numReductions - 1, self.nModules, self.poolKernel, self.poolStride)
         else:
             _num1res = []
             for _ in range(self.nModules):
-                _num1res.append(Residual(self.nChannels,self.nChannels))
+                _num1res.append(Residual(self.nChannels, self.nChannels))
 
             self.num1res = nn.Sequential(*_num1res)  # doesnt seem that important ?
 
@@ -54,7 +56,7 @@ class Hourglass(nn.Module):
 
         _lowres = []
         for _ in range(self.nModules):
-            _lowres.append(Residual(self.nChannels,self.nChannels))
+            _lowres.append(Residual(self.nChannels, self.nChannels))
 
         self.lowres = nn.Sequential(*_lowres)
 
@@ -84,14 +86,15 @@ class Hourglass(nn.Module):
         diffX = out1.size()[3] - out2.size()[3]
 
         out2 = F.pad(out2, (diffX // 2, diffX - diffX // 2,
-                        diffY // 2, diffY - diffY // 2))
-
+                            diffY // 2, diffY - diffY // 2))
 
         return out2 + out1
 
 
 class StackedHourGlass(nn.Module):
     """docstring for StackedHourGlass"""
+
+
     def __init__(self, nChannels, nStack, nModules, numReductions, nInputs1=3, nInputs2=68, nOutputs=2):
         super(StackedHourGlass, self).__init__()
         self.nChannels = nChannels
@@ -105,9 +108,15 @@ class StackedHourGlass(nn.Module):
         self.res2 = Residual(64, 128)
         self.res3 = Residual(128, self.nChannels)
 
-        self.res_lands = Residual(nInputs2, self.nChannels)
+        # FIXME - TEMPORARY!!!
+        self.__with_lands = False
+        self.__with_aug = True
 
-        _hourglass, _Residual, _lin1, _chantojoints, _lin2, _jointstochan = [],[],[],[],[],[]
+        # FIXME
+        if self.__with_lands or self.__with_aug:
+            self.res_lands = Residual(nInputs2, self.nChannels)
+
+        _hourglass, _Residual, _lin1, _chantojoints, _lin2, _jointstochan = [], [], [], [], [], []
 
         for _ in range(self.nStack):
             _hourglass.append(Hourglass(self.nChannels, self.numReductions, self.nModules))
@@ -118,8 +127,8 @@ class StackedHourGlass(nn.Module):
             _Residual.append(_ResidualModules)
             _lin1.append(BnReluConv(self.nChannels, self.nChannels))
             _chantojoints.append(nn.Conv2d(self.nChannels, self.nOutputs, 1))
-            _lin2.append(nn.Conv2d(self.nChannels, self.nChannels,1))
-            _jointstochan.append(nn.Conv2d(self.nOutputs,self.nChannels,1))
+            _lin2.append(nn.Conv2d(self.nChannels, self.nChannels, 1))
+            _jointstochan.append(nn.Conv2d(self.nOutputs, self.nChannels, 1))
 
         self.hourglass = nn.ModuleList(_hourglass)
         self.Residual = nn.ModuleList(_Residual)
@@ -128,18 +137,18 @@ class StackedHourGlass(nn.Module):
         self.lin2 = nn.ModuleList(_lin2)
         self.jointstochan = nn.ModuleList(_jointstochan)
 
-
-        self.lands_conv = nn.Sequential(
-            nn.Conv2d(
-                in_channels=self.nChannels,
-                out_channels=68,
-                kernel_size=3,
-                stride=1
-            ),
-            nn.ReLU(inplace=True),
-        )
-        self.lands_lin = nn.Linear(15876, 2)
-
+        # FIXME
+        if self.__with_lands or self.__with_aug:
+            self.lands_conv = nn.Sequential(
+                nn.Conv2d(
+                    in_channels=self.nChannels,
+                    out_channels=68,
+                    kernel_size=3,
+                    stride=1
+                ),
+                nn.ReLU(inplace=True),
+            )
+            self.lands_lin = nn.Linear(15876, 2)
 
 
     def forward(self, imgs, landmarks_maps=None):
@@ -148,7 +157,9 @@ class StackedHourGlass(nn.Module):
         x = self.res2(x)
         x = self.res3(x)
 
-        #landmarks_maps = self.res_lands(landmarks_maps)
+        # FIXME
+        if self.__with_lands:
+            landmarks_maps = self.res_lands(landmarks_maps)
 
         for i in range(self.nStack):
             x1 = self.hourglass[i](x)
@@ -156,12 +167,26 @@ class StackedHourGlass(nn.Module):
             x1 = self.lin1[i](x1)
             out = self.chantojoints[i](x1)
             x1 = self.lin2[i](x1)
-            #if i == 0:
-            #    out_inter = self.lands_conv(x1)
-            #    out_inter = out_inter.view(x1.shape[0], 68, 126 * 126)
-            #    out_inter = self.lands_lin(out_inter)
 
-            #x = x + x1 + landmarks_maps + self.jointstochan[i](out)
-            x = x + x1 + self.jointstochan[i](out)
+            # FIXME
+            if self.__with_lands:
+                if i == 0:
+                    out_inter = self.lands_conv(x1)
+                    out_inter = out_inter.view(x1.shape[0], 68, 126 * 126)
+                    out_inter = self.lands_lin(out_inter)
 
-        return out#, out_inter
+            # FIXME
+            if self.__with_lands:
+                x = x + x1 + landmarks_maps + self.jointstochan[i](out)
+
+            # FIXME
+            if not self.__with_lands:
+                x = x + x1 + self.jointstochan[i](out)
+
+        # FIXME
+        if not self.__with_lands:
+            return out
+
+        # FIXME
+        if self.__with_lands:
+            return out, out_inter
