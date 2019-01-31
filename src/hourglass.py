@@ -92,7 +92,7 @@ class Hourglass(nn.Module):
 
 class StackedHourGlass(nn.Module):
     """docstring for StackedHourGlass"""
-    def __init__(self, nChannels, nStack, nModules, numReductions, nOutputs, nInputs=3):
+    def __init__(self, nChannels, nStack, nModules, numReductions, nInputs1=3, nInputs2=68, nOutputs=2):
         super(StackedHourGlass, self).__init__()
         self.nChannels = nChannels
         self.nStack = nStack
@@ -100,10 +100,12 @@ class StackedHourGlass(nn.Module):
         self.numReductions = numReductions
         self.nOutputs = nOutputs
 
-        self.res1 = Residual(nInputs, 64)
+        self.res1 = Residual(nInputs1, 64)
         self.mp = nn.MaxPool2d(2, 2)
         self.res2 = Residual(64, 128)
         self.res3 = Residual(128, self.nChannels)
+
+        self.res_lands = Residual(nInputs2, self.nChannels)
 
         _hourglass, _Residual, _lin1, _chantojoints, _lin2, _jointstochan = [],[],[],[],[],[]
 
@@ -126,18 +128,40 @@ class StackedHourGlass(nn.Module):
         self.lin2 = nn.ModuleList(_lin2)
         self.jointstochan = nn.ModuleList(_jointstochan)
 
-    def forward(self, x):
 
-        x = self.res1(x)
+        self.lands_conv = nn.Sequential(
+            nn.Conv2d(
+                in_channels=self.nChannels,
+                out_channels=68,
+                kernel_size=3,
+                stride=1
+            ),
+            nn.ReLU(inplace=True),
+        )
+        self.lands_lin = nn.Linear(15876, 2)
+
+
+
+    def forward(self, imgs, landmarks_maps=None):
+
+        x = self.res1(imgs)
         x = self.res2(x)
         x = self.res3(x)
-        out = None
+
+        #landmarks_maps = self.res_lands(landmarks_maps)
+
         for i in range(self.nStack):
             x1 = self.hourglass[i](x)
             x1 = self.Residual[i](x1)
             x1 = self.lin1[i](x1)
             out = self.chantojoints[i](x1)
             x1 = self.lin2[i](x1)
+            #if i == 0:
+            #    out_inter = self.lands_conv(x1)
+            #    out_inter = out_inter.view(x1.shape[0], 68, 126 * 126)
+            #    out_inter = self.lands_lin(out_inter)
+
+            #x = x + x1 + landmarks_maps + self.jointstochan[i](out)
             x = x + x1 + self.jointstochan[i](out)
 
-        return out
+        return out#, out_inter
