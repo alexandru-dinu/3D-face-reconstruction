@@ -1,0 +1,13 @@
+numpy
+scikit_image
+setuptools
+torch
+opencv_python
+visvis
+scipy
+tqdm
+torchfile
+oct2py
+matplotlib
+iou
+skimage

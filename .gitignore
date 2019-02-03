@@ -1,7 +1,10 @@
-# own
+meshes/
 checkpoints/
 datasets/
 pre_trained_models/
+test_imgs/
+
+octave-workspace
 .idea/
 .vscode/
 

@@ -6,17 +6,25 @@ import matplotlib.pyplot as plt
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../face-alignment"))
 
-from skimage import io
 import face_alignment
 
-fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, flip_input=False)
+net_face_align = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, flip_input=False)
 
-img = io.imread(sys.argv[1])
-preds = fa.get_landmarks(img)
 
-for point in preds[0]:
-    x, y = point
-    cv2.circle(img, (x, y), radius=2, color=(0, 255, 0), thickness=-1)
+def get_lands(img):
+    _img = img.copy()
 
-plt.imshow(img)
-plt.show()
+    preds = net_face_align.get_landmarks(_img)
+
+    for point in preds[0]:
+        x, y = point
+        cv2.circle(_img, (x, y), radius=2, color=(0, 255, 0), thickness=-1)
+
+    return _img
+
+
+if __name__ == '__main__':
+    lands = get_lands(cv2.imread(sys.argv[1]))
+
+    plt.imshow(lands)
+    plt.show()
