@@ -10,5 +10,5 @@
 - [Supplementary material](https://aaronsplace.co.uk/papers/jackson2017recon/supp.pdf)
 
 ### Datasets
-- [300W-3D-all](https://drive.google.com/open?id=18W2a-LtUHty0C7jbTOArQV2eY73oicoa)
+- [300W-3D-all](https://ibug.doc.ic.ac.uk/resources/300-W/)
 - [AFLW-2000-3D](http://www.cbsr.ia.ac.cn/users/xiangyuzhu/projects/3DDFA/Database/AFLW2000-3D.zip)
