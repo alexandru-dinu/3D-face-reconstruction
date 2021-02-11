@@ -21,7 +21,9 @@ def get_coords(out, sz=0.25, thr=0.3):
     pts = np.argwhere(mat >= thr)
 
     x, y = pts[:, 0], pts[:, 1]
-    z = sz * mat[mat > 0].reshape(-1, )
+    z = sz * mat[mat > 0].reshape(
+        -1,
+    )
     assert len(x) == len(y) == len(z)
 
     return x, y, z
@@ -33,7 +35,7 @@ def to_stl(file, x, y, z):
     octave.stlwrite(f"../meshes/{file}.stl", x, y, z)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # model output (voxel volume) -> obj -> meshlab visualization
 
     os.makedirs("../meshes", exist_ok=True)
@@ -41,10 +43,15 @@ if __name__ == '__main__':
     args = get_args()
 
     data = data_loader.FacesWith3DCoords(
-        images_dir=args.images_dir, mats_dir=args.mats_dir, landmarks_dir=args.lands_dir, transform=args.transform
+        images_dir=args.images_dir,
+        mats_dir=args.mats_dir,
+        landmarks_dir=args.lands_dir,
+        transform=args.transform,
     )
 
-    model = StackedHourGlass(nChannels=224, nStack=2, nModules=2, numReductions=4, nOutputs=200)
+    model = StackedHourGlass(
+        nChannels=224, nStack=2, nModules=2, numReductions=4, nOutputs=200
+    )
     model.cuda()
     model.load_state_dict(torch.load(args.checkpoint))
     model.eval()

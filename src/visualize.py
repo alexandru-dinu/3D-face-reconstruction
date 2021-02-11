@@ -24,11 +24,16 @@ def visualize(im, vol, sz=0.25, thr=0.99):
     im = (im * 128 + 128).astype(np.uint8)
     # im = np.ones_like(im)
 
-    volRGB = np.stack(((vol >= thr) * im[:, :, 0],
-                       (vol >= thr) * im[:, :, 1],
-                       (vol >= thr) * im[:, :, 2]), axis=3)
+    volRGB = np.stack(
+        (
+            (vol >= thr) * im[:, :, 0],
+            (vol >= thr) * im[:, :, 1],
+            (vol >= thr) * im[:, :, 2],
+        ),
+        axis=3,
+    )
 
-    v = vv.volshow(volRGB, renderStyle='iso')
+    v = vv.volshow(volRGB, renderStyle="iso")
     v.transformations[1].sz = sz  # Z rescaling
 
     l0 = vv.gca()
@@ -45,7 +50,10 @@ if __name__ == "__main__":
     args = get_args()
 
     trainset = data_loader.FacesWith3DCoords(
-        images_dir=args.images_dir, mats_dir=args.mats_dir, landmarks_dir=args.lands_dir, transform=args.transform
+        images_dir=args.images_dir,
+        mats_dir=args.mats_dir,
+        landmarks_dir=args.lands_dir,
+        transform=args.transform,
     )
 
     i = np.random.randint(len(trainset))

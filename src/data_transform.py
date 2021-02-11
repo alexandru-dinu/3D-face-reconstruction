@@ -51,11 +51,11 @@ class Scale(object):
 
         if scale > 1.0:
             offset = (new_size - size) // 2
-            img = img[offset:offset + size, offset:offset + size, :]
+            img = img[offset : offset + size, offset : offset + size, :]
             return img
 
         final_img = np.zeros(image.shape, dtype=np.uint8)
         offset = (size - new_size) // 2
 
-        final_img[offset:offset + new_size, offset:offset + new_size, :] = img
+        final_img[offset : offset + new_size, offset : offset + new_size, :] = img
         return final_img

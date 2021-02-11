@@ -8,7 +8,7 @@ from visualize import visualize
 
 from out_to_mesh import get_coords, to_stl
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = get_args()
 
     # data = dataloaders.FacesWith3DCoords(
@@ -20,7 +20,9 @@ if __name__ == '__main__':
     img = torch.from_numpy(img.transpose(2, 0, 1)).float()
     img = (img - 128) / 128.0
 
-    model = StackedHourGlass(nChannels=224, nStack=2, nModules=2, numReductions=4, nOutputs=200)
+    model = StackedHourGlass(
+        nChannels=224, nStack=2, nModules=2, numReductions=4, nOutputs=200
+    )
     model.cuda()
     model.load_state_dict(torch.load(args.checkpoint))
     model.eval()

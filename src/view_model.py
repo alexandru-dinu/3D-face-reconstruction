@@ -9,5 +9,5 @@ print("vars:", list(vars(model)))
 print("_obj:", model._obj.keys())
 
 print("modules:")
-for i, m in enumerate(model._obj[b'modules'], start=1):
+for i, m in enumerate(model._obj[b"modules"], start=1):
     print("\t", i, "->", m._obj.keys())

@@ -4,11 +4,15 @@ import sys
 import cv2
 import matplotlib.pyplot as plt
 
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../face-alignment"))
+sys.path.append(
+    os.path.join(os.path.dirname(os.path.realpath(__file__)), "../face-alignment")
+)
 
 import face_alignment
 
-net_face_align = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, flip_input=False)
+net_face_align = face_alignment.FaceAlignment(
+    face_alignment.LandmarksType._2D, flip_input=False
+)
 
 
 def get_lands(img):
@@ -23,7 +27,7 @@ def get_lands(img):
     return _img
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     lands = get_lands(cv2.imread(sys.argv[1]))
 
     plt.imshow(lands)

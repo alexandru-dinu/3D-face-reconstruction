@@ -3,7 +3,8 @@ import torch.nn as nn
 
 class BnReluConv(nn.Module):
     """docstring for BnReluConv"""
-    def __init__(self, inChannels, outChannels, kernelSize = 1, stride = 1, padding = 0):
+
+    def __init__(self, inChannels, outChannels, kernelSize=1, stride=1, padding=0):
         super(BnReluConv, self).__init__()
         self.inChannels = inChannels
         self.outChannels = outChannels
@@ -12,7 +13,13 @@ class BnReluConv(nn.Module):
         self.padding = padding
 
         self.bn = nn.BatchNorm2d(self.inChannels)
-        self.conv = nn.Conv2d(self.inChannels, self.outChannels, self.kernelSize, self.stride, self.padding)
+        self.conv = nn.Conv2d(
+            self.inChannels,
+            self.outChannels,
+            self.kernelSize,
+            self.stride,
+            self.padding,
+        )
         self.relu = nn.ReLU(inplace=True)
 
     def forward(self, x):
@@ -24,11 +31,12 @@ class BnReluConv(nn.Module):
 
 class ConvBlock(nn.Module):
     """docstring for ConvBlock"""
+
     def __init__(self, inChannels, outChannels):
         super(ConvBlock, self).__init__()
         self.inChannels = inChannels
         self.outChannels = outChannels
-        self.outChannelsby2 = outChannels//2
+        self.outChannelsby2 = outChannels // 2
 
         self.cbr1 = BnReluConv(self.inChannels, self.outChannelsby2, 1, 1, 0)
         self.cbr2 = BnReluConv(self.outChannelsby2, self.outChannelsby2, 3, 1, 1)
@@ -43,23 +51,25 @@ class ConvBlock(nn.Module):
 
 class SkipLayer(nn.Module):
     """docstring for SkipLayer"""
+
     def __init__(self, inChannels, outChannels):
         super(SkipLayer, self).__init__()
         self.inChannels = inChannels
         self.outChannels = outChannels
-        if (self.inChannels == self.outChannels):
-                self.conv = None
+        if self.inChannels == self.outChannels:
+            self.conv = None
         else:
-                self.conv = nn.Conv2d(self.inChannels, self.outChannels, 1)
+            self.conv = nn.Conv2d(self.inChannels, self.outChannels, 1)
 
     def forward(self, x):
         if self.conv is not None:
-                x = self.conv(x)
+            x = self.conv(x)
         return x
 
 
 class Residual(nn.Module):
     """docstring for Residual"""
+
     def __init__(self, inChannels, outChannels):
         super(Residual, self).__init__()
         self.inChannels = inChannels

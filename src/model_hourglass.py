@@ -6,8 +6,15 @@ from model_hourglass_parts import *
 class Hourglass(nn.Module):
     """docstring for Hourglass"""
 
-
-    def __init__(self, nChannels=256, numReductions=4, nModules=2, poolKernel=(3, 3), poolStride=(3, 3), upSampleKernel=3):
+    def __init__(
+        self,
+        nChannels=256,
+        numReductions=4,
+        nModules=2,
+        poolKernel=(3, 3),
+        poolStride=(3, 3),
+        upSampleKernel=3,
+    ):
         super(Hourglass, self).__init__()
         self.numReductions = numReductions
         self.nModules = nModules
@@ -40,8 +47,14 @@ class Hourglass(nn.Module):
 
         self.afterpool = nn.Sequential(*_afterpool)
 
-        if (numReductions > 1):
-            self.hg = Hourglass(self.nChannels, self.numReductions - 1, self.nModules, self.poolKernel, self.poolStride)
+        if numReductions > 1:
+            self.hg = Hourglass(
+                self.nChannels,
+                self.numReductions - 1,
+                self.nModules,
+                self.poolKernel,
+                self.poolStride,
+            )
         else:
             _num1res = []
             for _ in range(self.nModules):
@@ -63,8 +76,7 @@ class Hourglass(nn.Module):
         Upsampling Layer (Can we change this??????)
         As per Newell's paper upsamping recommended
         """
-        self.up = nn.Upsample(scale_factor=upSampleKernel, mode='nearest')
-
+        self.up = nn.Upsample(scale_factor=upSampleKernel, mode="nearest")
 
     def forward(self, x):
 
@@ -84,8 +96,9 @@ class Hourglass(nn.Module):
         diffY = out1.size()[2] - out2.size()[2]
         diffX = out1.size()[3] - out2.size()[3]
 
-        out2 = F.pad(out2, (diffX // 2, diffX - diffX // 2,
-                            diffY // 2, diffY - diffY // 2))
+        out2 = F.pad(
+            out2, (diffX // 2, diffX - diffX // 2, diffY // 2, diffY - diffY // 2)
+        )
 
         return out2 + out1
 
@@ -93,8 +106,16 @@ class Hourglass(nn.Module):
 class StackedHourGlass(nn.Module):
     """docstring for StackedHourGlass"""
 
-
-    def __init__(self, nChannels, nStack, nModules, numReductions, nInputs1=3, nInputs2=68, nOutputs=2):
+    def __init__(
+        self,
+        nChannels,
+        nStack,
+        nModules,
+        numReductions,
+        nInputs1=3,
+        nInputs2=68,
+        nOutputs=2,
+    ):
         super(StackedHourGlass, self).__init__()
         self.nChannels = nChannels
         self.nStack = nStack
@@ -115,10 +136,19 @@ class StackedHourGlass(nn.Module):
         if self.__with_lands or self.__with_aug:
             self.res_lands = Residual(nInputs2, self.nChannels)
 
-        _hourglass, _Residual, _lin1, _chantojoints, _lin2, _jointstochan = [], [], [], [], [], []
+        _hourglass, _Residual, _lin1, _chantojoints, _lin2, _jointstochan = (
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+        )
 
         for _ in range(self.nStack):
-            _hourglass.append(Hourglass(self.nChannels, self.numReductions, self.nModules))
+            _hourglass.append(
+                Hourglass(self.nChannels, self.numReductions, self.nModules)
+            )
             _ResidualModules = []
             for _ in range(self.nModules):
                 _ResidualModules.append(Residual(self.nChannels, self.nChannels))
@@ -140,15 +170,11 @@ class StackedHourGlass(nn.Module):
         if self.__with_lands or self.__with_aug:
             self.lands_conv = nn.Sequential(
                 nn.Conv2d(
-                    in_channels=self.nChannels,
-                    out_channels=68,
-                    kernel_size=3,
-                    stride=1
+                    in_channels=self.nChannels, out_channels=68, kernel_size=3, stride=1
                 ),
                 nn.ReLU(inplace=True),
             )
             self.lands_lin = nn.Linear(15876, 2)
-
 
     def forward(self, imgs, landmarks_maps=None):
 

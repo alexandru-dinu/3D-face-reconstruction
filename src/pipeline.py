@@ -16,7 +16,9 @@ trainloader = torch.utils.data.DataLoader(
     trainset, batch_size=2, shuffle=True, num_workers=2
 )
 
-model = StackedHourGlass(nChannels=224, nStack=2, nModules=2, numReductions=4, nOutputs=200)
+model = StackedHourGlass(
+    nChannels=224, nStack=2, nModules=2, numReductions=4, nOutputs=200
+)
 model.cuda()
 model.train()
 print("Set-up model")
@@ -72,13 +74,24 @@ def train():
             epoch_avg += loss.item()
 
             if i % 1 == 0:
-                print('[%2d, %5d/%5d] loss: %.8f lr %.8f' % (epoch, i, len(trainloader), running_loss / 1, scheduler.get_lr()[0]))
+                print(
+                    "[%2d, %5d/%5d] loss: %.8f lr %.8f"
+                    % (
+                        epoch,
+                        i,
+                        len(trainloader),
+                        running_loss / 1,
+                        scheduler.get_lr()[0],
+                    )
+                )
                 running_loss = 0.0
 
         print("EPOCH AVG", epoch_avg / len(trainloader))
 
         if epoch % 5 == 0:
-            torch.save(model.state_dict(), "../checkpoints/2hourglass_%d_schd_with_aug" % epoch)
+            torch.save(
+                model.state_dict(), "../checkpoints/2hourglass_%d_schd_with_aug" % epoch
+            )
 
 
 if __name__ == "__main__":

@@ -11,8 +11,13 @@ from utils import get_args, gaussian_distribution
 
 
 class FacesWith3DCoords(Dataset):
-
-    def __init__(self, images_dir: str, mats_dir: str, landmarks_dir: str = None, transform: bool = False):
+    def __init__(
+        self,
+        images_dir: str,
+        mats_dir: str,
+        landmarks_dir: str = None,
+        transform: bool = False,
+    ):
         self.images, self.volumes, self.landmarks = [], [], []
         self.transform = transform
 
@@ -33,7 +38,6 @@ class FacesWith3DCoords(Dataset):
 
         assert len(self.images) == len(self.volumes)
 
-
     def __getitem__(self, index):
         assert 0 <= index < len(self.images)
 
@@ -44,21 +48,28 @@ class FacesWith3DCoords(Dataset):
         # construct gaussians for each landmark
         lands = np.zeros((68, size, size))
         if self.landmarks:
-            x_lands, y_lands = scipy.io.loadmat(self.landmarks[index])['pt2d'].astype(np.int32)
+            x_lands, y_lands = scipy.io.loadmat(self.landmarks[index])["pt2d"].astype(
+                np.int32
+            )
             for i in range(len(x_lands)):
                 lands[i] = gaussian_distribution(x_lands[i], y_lands[i], size)
                 lands[i] = data_transform.rotate(np.expand_dims(lands[i], axis=2), 90)
             lands = np.transpose(lands, axes=(1, 2, 0))
 
         # load 3D coordinates
-        x, y, z = scipy.io.loadmat(self.volumes[index])['Fitted_Face'].astype(np.int32)
+        x, y, z = scipy.io.loadmat(self.volumes[index])["Fitted_Face"].astype(np.int32)
         z = z - z.min()
 
         depth_map = np.zeros((size, size), dtype=np.float)
         for i in range(len(x)):
             depth_map[x[i], y[i]] = max(z[i], depth_map[x[i], y[i]])
 
-        depth_map = cv2.morphologyEx(depth_map, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)), iterations=2)
+        depth_map = cv2.morphologyEx(
+            depth_map,
+            cv2.MORPH_CLOSE,
+            cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)),
+            iterations=2,
+        )
         depth_map = cv2.GaussianBlur(depth_map, ksize=(5, 5), sigmaX=3, sigmaY=3)
         depth_map = data_transform.rotate(np.expand_dims(depth_map, axis=2), 90)
 
@@ -66,7 +77,7 @@ class FacesWith3DCoords(Dataset):
         volume = np.zeros((size, size, 200), dtype=np.uint8)
         for i in range(size):
             for j in range(size):
-                volume[i, j, :int(depth_map[i, j])] = 1
+                volume[i, j, : int(depth_map[i, j])] = 1
 
         # data augmentation (prob 0.2)
         if self.transform and np.random.rand() < 0.2:
@@ -79,7 +90,9 @@ class FacesWith3DCoords(Dataset):
             factor = 0.85 + np.random.rand() * (1.15 - 0.85)
 
             img, volume = self.tf_rotate(img, alpha), self.tf_rotate(volume, alpha)
-            img, volume = self.tf_translate(img, tx, ty), self.tf_translate(volume, tx, ty)
+            img, volume = self.tf_translate(img, tx, ty), self.tf_translate(
+                volume, tx, ty
+            )
             img, volume = self.tf_scale(img, factor), self.tf_scale(volume, factor)
 
             if self.landmarks:
@@ -99,16 +112,18 @@ class FacesWith3DCoords(Dataset):
         # C, H, W
         return img, volume, lands
 
-
     def __len__(self):
         return len(self.images)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = get_args()
 
     data = FacesWith3DCoords(
-        images_dir=args.images_dir, mats_dir=args.mats_dir, landmarks_dir=args.lands_dir, transform=args.transform
+        images_dir=args.images_dir,
+        mats_dir=args.mats_dir,
+        landmarks_dir=args.lands_dir,
+        transform=args.transform,
     )
 
     from visualize import visualize

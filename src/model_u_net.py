@@ -19,9 +19,8 @@ class UNet(nn.Module):
             out_channels=out_channels,
             kernel_size=(1, 1),
             stride=1,
-            padding=0
+            padding=0,
         )
-
 
     def forward(self, x):
         x1 = self.inc(x)
